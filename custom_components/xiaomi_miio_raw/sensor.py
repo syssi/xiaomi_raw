@@ -20,6 +20,7 @@ CONF_SENSOR_PROPERTY = "sensor_property"
 CONF_SENSOR_UNIT = "sensor_unit"
 CONF_DEFAULT_PROPERTIES = "default_properties"
 CONF_DEFAULT_PROPERTIES_GETTER = "default_properties_getter"
+CONF_MAX_PROPERTIES = "max_properties"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -31,6 +32,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
             cv.ensure_list, [cv.string]
         ),
+        vol.Optional(CONF_MAX_PROPERTIES, default=15): cv.positive_int,
     }
 )
 
@@ -152,6 +154,7 @@ class XiaomiMiioGenericDevice(Entity):
         self._unit_of_measurement = config.get(CONF_SENSOR_UNIT)
         self._properties = config.get(CONF_DEFAULT_PROPERTIES)
         self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
+        self._max_properties = config.get(CONF_MAX_PROPERTIES)
 
         if self._sensor_property is not None:
             self._properties.append(self._sensor_property)
@@ -236,10 +239,10 @@ class XiaomiMiioGenericDevice(Entity):
             while _props:
                 values.extend(
                     await self.hass.async_add_job(
-                        self._device.send, self._properties_getter, _props[:15]
+                        self._device.send, self._properties_getter, _props[:self._max_properties]
                     )
                 )
-                _props[:] = _props[15:]
+                _props[:] = _props[self._max_properties:]
 
             _LOGGER.debug("Response of the get properties call: %s", values)
 
