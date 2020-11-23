@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from collections import defaultdict
+from ast import literal_eval
 from functools import partial
 
 import homeassistant.helpers.config_validation as cv
@@ -42,8 +42,7 @@ ATTR_HARDWARE_VERSION = "hardware_version"
 ATTR_PROPERTIES = "properties"
 ATTR_METHOD = "method"
 ATTR_PARAMS = "params"
-
-SUCCESS = ["ok"]
+CMD_GET_PROPERTIES = 'get_properties'
 
 SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_ENTITY_ID): cv.entity_ids})
 
@@ -156,7 +155,7 @@ class XiaomiMiioGenericDevice(Entity):
         self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
         self._max_properties = config.get(CONF_MAX_PROPERTIES)
 
-        if self._sensor_property is not None:
+        if self._sensor_property is not None and self._properties_getter != CMD_GET_PROPERTIES:
             self._properties.append(self._sensor_property)
             self._properties = list(set(self._properties))
 
@@ -166,12 +165,25 @@ class XiaomiMiioGenericDevice(Entity):
 
         self._available = None
         self._state = None
+        properties = self.set_properties(self._properties)
         self._state_attrs = {
             ATTR_MODEL: self._model,
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
-            ATTR_PROPERTIES: self._properties,
+            ATTR_PROPERTIES: properties,
         }
+
+    def set_properties(self, properties):
+        if self._properties_getter != CMD_GET_PROPERTIES:
+            self._properties = properties
+            return properties
+        else:
+            mapping = {}
+            for p in properties:
+                p = literal_eval(p)
+                mapping[p['did']] = p
+            self._properties = mapping
+            return list(mapping.keys())
 
     @property
     def should_poll(self):
@@ -222,7 +234,7 @@ class XiaomiMiioGenericDevice(Entity):
 
             _LOGGER.info("Response received from miio device: %s", result)
 
-            return result == SUCCESS
+            return result and (result[0] == 'ok' or result[0]['code'] == 0)
         except DeviceException as exc:
             _LOGGER.error(mask_error, exc)
             return False
@@ -234,7 +246,11 @@ class XiaomiMiioGenericDevice(Entity):
         try:
             # A single request is limited to 16 properties. Therefore the
             # properties are divided into multiple requests
-            _props = self._properties.copy()
+            properties = self._properties
+            is_new = isinstance(properties, dict)
+            _props = list(properties.values()) if is_new else properties.copy()
+            _LOGGER.debug("Request of the get properties call: %s", _props)
+
             values = []
             while _props:
                 values.extend(
@@ -246,7 +262,7 @@ class XiaomiMiioGenericDevice(Entity):
 
             _LOGGER.debug("Response of the get properties call: %s", values)
 
-            properties_count = len(self._properties)
+            properties_count = len(properties)
             values_count = len(values)
             if properties_count != values_count:
                 _LOGGER.debug(
@@ -256,7 +272,10 @@ class XiaomiMiioGenericDevice(Entity):
                     values_count,
                 )
 
-            state = dict(defaultdict(lambda: None, zip(self._properties, values)))
+            if is_new:
+                state = dict((i['did'],i.get('value')) for i in values)
+            else:
+                state = dict(zip(properties, values))
 
             _LOGGER.info("New state: %s", state)
 
@@ -295,11 +314,11 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def async_set_properties(self, properties: list):
         """Set properties. Will be retrieved on next update."""
-        if self._sensor_property is not None:
+        if self._sensor_property is not None and self._properties_getter != CMD_GET_PROPERTIES:
             properties.append(self._sensor_property)
 
-        self._properties = list(set(properties))
-        self._state_attrs.update({ATTR_PROPERTIES: self._properties})
+        properties = self.set_properties(list(set(properties)))
+        self._state_attrs.update({ATTR_PROPERTIES: properties})
 
     async def async_command(self, method: str, params):
         """Send a raw command to the device."""
