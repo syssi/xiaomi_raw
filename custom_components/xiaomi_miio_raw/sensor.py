@@ -162,7 +162,6 @@ class XiaomiMiioGenericDevice(Entity):
             self._sensor_property is not None and
             not self._sensor_property.startswith("unnamed")):
             self._properties.append(self._sensor_property)
-            self._properties = list(set(self._properties))
 
         self._model = device_info.model
         self._unique_id = "{}-{}".format(device_info.model, device_info.mac_address)
@@ -181,15 +180,15 @@ class XiaomiMiioGenericDevice(Entity):
 
     def set_properties(self, properties):
         if self._properties_getter != CMD_GET_PROPERTIES:
-            self._properties = properties
-            return properties
+            self._properties = list(set(properties))
+            return self._properties
         else:
-            mapping = {}
+            attrs = {}
             for p in properties:
                 p = literal_eval(p)
-                mapping[p['did']] = p
-            self._properties = mapping
-            return list(mapping.keys())
+                attrs[p['siid'],p['piid']] = p.pop('name',p['did']),p
+            self._properties = attrs
+            return list(i[0] for i in attrs.values())
 
     @property
     def should_poll(self):
@@ -250,7 +249,7 @@ class XiaomiMiioGenericDevice(Entity):
         try:
             # A single request is limited to 16 properties. Therefore the
             # properties are divided into multiple requests
-            _props = list(properties.values()) if is_new else properties.copy()
+            _props = list(i[1] for i in attrs.values()) if is_new else attrs.copy()
             _LOGGER.debug("Request of the get properties call: %s", _props)
 
             values = []
@@ -265,7 +264,7 @@ class XiaomiMiioGenericDevice(Entity):
             _LOGGER.debug("Response of the get properties call: %s", values)
         except DeviceException as ex:
             self._available = False
-            _LOGGER.error("Got exception while fetching the state: %s", ex)
+            _LOGGER.warning("Got exception while fetching the state: %s", ex)
             return
 
         properties_count = len(attrs)
@@ -282,7 +281,7 @@ class XiaomiMiioGenericDevice(Entity):
                 )
 
         if is_new:
-            state = dict((i['did'],i.get('value')) for i in values)
+            state = dict((attrs[i['siid'],i['piid']][0],i.get('value')) for i in values)
         else:
             state = dict(zip(attrs, values))
 
@@ -300,7 +299,7 @@ class XiaomiMiioGenericDevice(Entity):
 
             except DeviceException as ex:
                 self._available = False
-                _LOGGER.error("Got exception while fetching device info: %s", ex)
+                _LOGGER.warning("Got exception while fetching device info: %s", ex)
 
     async def async_turn_on(self, **kwargs):
         """Turn the miio device on."""
@@ -324,7 +323,7 @@ class XiaomiMiioGenericDevice(Entity):
             not self._sensor_property.startswith("unnamed")):
             properties.append(self._sensor_property)
 
-        properties = self.set_properties(list(set(properties)))
+        properties = self.set_properties(properties)
         self._state_attrs.update({ATTR_PROPERTIES: properties})
 
     async def async_command(self, method: str, params):
