@@ -9,6 +9,10 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
+from miio import (  # pylint: disable=import-error
+    Device,
+    DeviceException
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,6 +44,7 @@ ATTR_MODEL = "model"
 ATTR_FIRMWARE_VERSION = "firmware_version"
 ATTR_HARDWARE_VERSION = "hardware_version"
 ATTR_PROPERTIES = "properties"
+ATTR_SENSOR_PROPERTY = "sensor_property"
 ATTR_METHOD = "method"
 ATTR_PARAMS = "params"
 CMD_GET_PROPERTIES = 'get_properties'
@@ -81,8 +86,6 @@ SERVICE_TO_METHOD = {
 @asyncio.coroutine
 def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
-    from miio import Device, DeviceException
-
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
 
@@ -155,7 +158,9 @@ class XiaomiMiioGenericDevice(Entity):
         self._properties_getter = config.get(CONF_DEFAULT_PROPERTIES_GETTER)
         self._max_properties = config.get(CONF_MAX_PROPERTIES)
 
-        if self._sensor_property is not None and self._properties_getter != CMD_GET_PROPERTIES:
+        if (self._properties_getter != CMD_GET_PROPERTIES and
+            self._sensor_property is not None and
+            not self._sensor_property.startswith("unnamed")):
             self._properties.append(self._sensor_property)
             self._properties = list(set(self._properties))
 
@@ -171,6 +176,7 @@ class XiaomiMiioGenericDevice(Entity):
             ATTR_FIRMWARE_VERSION: device_info.firmware_version,
             ATTR_HARDWARE_VERSION: device_info.hardware_version,
             ATTR_PROPERTIES: properties,
+            ATTR_SENSOR_PROPERTY: self._sensor_property,
         }
 
     def set_properties(self, properties):
@@ -227,8 +233,6 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
-        from miio import DeviceException
-
         try:
             result = await self.hass.async_add_job(partial(func, *args, **kwargs))
 
@@ -241,13 +245,11 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def async_update(self):
         """Fetch state from the miio device."""
-        from miio import DeviceException
-
+        attrs = self._properties
+        is_new = isinstance(attrs, dict)
         try:
             # A single request is limited to 16 properties. Therefore the
             # properties are divided into multiple requests
-            properties = self._properties
-            is_new = isinstance(properties, dict)
             _props = list(properties.values()) if is_new else properties.copy()
             _LOGGER.debug("Request of the get properties call: %s", _props)
 
@@ -261,10 +263,17 @@ class XiaomiMiioGenericDevice(Entity):
                 _props[:] = _props[self._max_properties:]
 
             _LOGGER.debug("Response of the get properties call: %s", values)
+        except DeviceException as ex:
+            self._available = False
+            _LOGGER.error("Got exception while fetching the state: %s", ex)
+            return
 
-            properties_count = len(properties)
-            values_count = len(values)
-            if properties_count != values_count:
+        properties_count = len(attrs)
+        values_count = len(values)
+        if properties_count != values_count:
+            if not is_new and properties_count == 1 and attrs[0] == "all":
+                attrs = ["unnamed" + str(i) for i in range(values_count)]
+            else:
                 _LOGGER.debug(
                     "Count (%s) of requested properties does not match the "
                     "count (%s) of received values.",
@@ -272,19 +281,15 @@ class XiaomiMiioGenericDevice(Entity):
                     values_count,
                 )
 
-            if is_new:
-                state = dict((i['did'],i.get('value')) for i in values)
-            else:
-                state = dict(zip(properties, values))
+        if is_new:
+            state = dict((i['did'],i.get('value')) for i in values)
+        else:
+            state = dict(zip(attrs, values))
 
-            _LOGGER.info("New state: %s", state)
+        _LOGGER.info("New state: %s", state)
 
-            self._available = True
-            self._state_attrs.update(state)
-
-        except DeviceException as ex:
-            self._available = False
-            _LOGGER.error("Got exception while fetching the state: %s", ex)
+        self._available = True
+        self._state_attrs.update(state)
 
         if self._sensor_property is not None:
             self._state = state.get(self._sensor_property)
@@ -314,7 +319,9 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def async_set_properties(self, properties: list):
         """Set properties. Will be retrieved on next update."""
-        if self._sensor_property is not None and self._properties_getter != CMD_GET_PROPERTIES:
+        if (self._properties_getter != CMD_GET_PROPERTIES and
+            self._sensor_property is not None and
+            not self._sensor_property.startswith("unnamed")):
             properties.append(self._sensor_property)
 
         properties = self.set_properties(list(set(properties)))
