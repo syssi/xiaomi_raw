@@ -75,6 +75,69 @@ switch:
 
 ```
 
+Another example configuration to control a miot device (`chuangmi.plug.212a01`). Thanks to @lovelylain for adding miot support to the sensor entity!
+
+```yaml
+
+sensor:
+  - platform: xiaomi_miio_raw
+    name: Smart Plug
+    host: 192.168.30.74
+    token: d880f00295a6db218b29a1879eea4663
+    max_properties: 10
+    default_properties_getter: get_properties
+    default_properties:
+      - "{'did': 'power', 'piid': 1, 'siid': 2}"
+      - "{'did': 'temperature', 'piid': 6, 'siid': 2}"
+      - "{'did': 'indicator_light', 'piid': 1, 'siid': 3}"
+      - "{'did': 'on_duration', 'piid': 1, 'siid': 4}"
+      - "{'did': 'off_duration', 'piid': 2, 'siid': 4}"
+      - "{'did': 'countdown', 'piid': 3, 'siid': 4}"
+      - "{'did': 'task_switch', 'piid': 4, 'siid': 4}"
+      - "{'did': 'countdown_info', 'piid': 5, 'siid': 4}"
+      - "{'did': 'power_consumption', 'piid': 1, 'siid': 5}"
+      - "{'did': 'electric_current', 'piid': 2, 'siid': 5}"
+      - "{'did': 'voltage', 'piid': 3, 'siid': 5}"
+      - "{'did': 'electric_power', 'piid': 6, 'siid': 5}"
+  - platform: template
+    sensors:
+      smart_plug_power:
+        unique_id: smart_plug_power
+        unit_of_measurement: W
+        value_template: "{{ state_attr('sensor.smart_plug', 'electric_power')|int / 100 }}"
+        availability_template: "{{ not is_state('sensor.smart_plug', 'unavailable') }}"
+        icon_template: "mdi:flash"
+
+switch:
+  - platform: template
+    switches:
+      smart_plug_switch:
+        unique_id: smart_plug_switch
+        value_template: "{{ state_attr('sensor.smart_plug', 'power') }}"
+        availability_template: "{{ not is_state('sensor.smart_plug', 'unavailable') }}"
+        turn_on:
+          service: xiaomi_miio_raw.sensor_raw_command
+          data:
+            entity_id: sensor.smart_plug
+            method: set_properties
+            params:
+              - did: power
+                siid: 2
+                piid: 1
+                value: true
+        turn_off:
+          service: xiaomi_miio_raw.sensor_raw_command
+          data:
+            entity_id: sensor.smart_plug
+            method: set_properties
+            params:
+              - did: power
+                siid: 2
+                piid: 1
+                value: false
+
+```
+
 Configuration variables (sensor platform):
 - **host** (*Required*): The IP of your miio device.
 - **token** (*Required*): The API token of your miio device.
