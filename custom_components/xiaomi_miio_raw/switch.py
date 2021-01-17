@@ -4,7 +4,7 @@ from functools import partial
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchDevice
+from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 from miio import Device, DeviceException
@@ -87,7 +87,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     async_add_devices([device], update_before_add=True)
 
 
-class XiaomiMiioGenericDevice(SwitchDevice):
+class XiaomiMiioGenericDevice(SwitchEntity):
     """Representation of a Xiaomi Miio Generic Device."""
 
     def __init__(self, device, config, device_info):
