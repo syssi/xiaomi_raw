@@ -29,6 +29,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_TOKEN): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_SENSOR_PROPERTY): cv.string,
+        vol.Optional(CONF_SENSOR_UNIT): cv.string,
         vol.Optional(CONF_DEFAULT_PROPERTIES_GETTER, default="get_prop"): cv.string,
         vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
             cv.ensure_list, [cv.string]
