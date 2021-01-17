@@ -142,6 +142,7 @@ Configuration variables (sensor platform):
 - **host** (*Required*): The IP of your miio device.
 - **token** (*Required*): The API token of your miio device.
 - **name** (*Optional*): The name of your miio device.
+- **max_properties** (*Optional*): The number of retrieved properties per API call
 - **sensor_property** (*Optional*): Property used as sensor value. WiFi RSSI if unset.
 - **sensor_unit** (*Optional*): Measurement unit of the property. dBm if unset.
 - **default_properties** (*Optional*): List of requested properties. ['power'] if unset.
