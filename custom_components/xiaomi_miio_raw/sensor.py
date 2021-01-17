@@ -163,7 +163,7 @@ class XiaomiMiioGenericDevice(Entity):
             self._properties.append(self._sensor_property)
 
         self._model = device_info.model
-        self._unique_id = "{}-{}".format(device_info.model, device_info.mac_address)
+        self._unique_id = "{}-{}-{}".format(device_info.model, device_info.mac_address, self._sensor_property)
         self._icon = "mdi:flask-outline"
 
         self._available = None
