@@ -1,0 +1,49 @@
+# Model: chuangmi.plug.m1
+# Hardware version: MW300
+# Firmware version: 1.2.4_17
+
+# Add this to your configuration.yaml to load this package:
+#
+# homeassistant:
+#  packages:
+#    e2e_package_mw300: !include e2e_package_mw300.yaml
+#
+#
+
+logger:
+  default: warn
+  logs:
+    custom_components.xiaomi_miio_raw: debug
+    miio: debug
+
+sensor:
+  - platform: xiaomi_miio_raw
+    name: Plug Temperature
+    host: 192.168.1.54
+    token: 2bb651469137121bb07d0ea40e7d6c20
+    sensor_property: 'temperature'
+    sensor_unit: '°C'
+    default_properties_getter: 'get_prop'
+    default_properties:
+      - temperature
+      - power
+
+  - platform: xiaomi_miio_raw
+    name: Plug WiFi Signal
+    host: 192.168.1.54
+    token: 2bb651469137121bb07d0ea40e7d6c20
+    sensor_unit: 'dBm'
+
+switch:
+  - platform: xiaomi_miio_raw
+    name: Mi Plug Mini
+    host: 192.168.1.54
+    token: 2bb651469137121bb07d0ea40e7d6c20
+    turn_on_command: 'set_power'
+    turn_on_parameters: 'on'
+    turn_off_command: 'set_power'
+    turn_off_parameters: 'off'
+    state_property: 'power'
+    state_property_getter: 'get_prop'
+    state_on_value: 'on'
+    state_off_value: 'off'
