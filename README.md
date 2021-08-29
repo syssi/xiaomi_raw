@@ -1,5 +1,11 @@
 # Xiaomi Raw
 
+![GitHub actions](https://github.com/syssi/xiaomi_raw/actions/workflows/ci.yaml/badge.svg)
+![GitHub stars](https://img.shields.io/github/stars/syssi/xiaomi_raw)
+![GitHub forks](https://img.shields.io/github/forks/syssi/xiaomi_raw)
+![GitHub watchers](https://img.shields.io/github/watchers/syssi/xiaomi_raw)
+[!["Buy Me A Coffee"](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/syssi)
+
 This is a custom component for home assistant to faciliate the reverse engeneering of Xiaomi MiIO devices.
 
 Please follow the instructions on [Retrieving the Access Token](https://home-assistant.io/components/xiaomi/#retrieving-the-access-token) to get the API token to use in the configuration.yaml file.
