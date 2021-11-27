@@ -142,6 +142,30 @@ switch:
                 piid: 1
                 value: false
 
+
+```
+
+An example for using the raw sensor to create a rice-cooker temperature sensor based on the raw data. Tested on an `chunmi.cooker.normal2`. This sensor always provides the current temperature unlike the the official sensor that only works during the rice program.
+
+```yaml
+sensor:
+  - platform: xiaomi_miio_raw
+    name: cooker
+    host: 192.168.0.122
+    token: 
+    sensor_property: 'unnamed11'
+    default_properties_getter: 'get_prop'
+    default_properties:
+    - 'all'
+
+template:
+  - sensor:
+      - name: "Cooker Temperature"
+        unit_of_measurement: "°C"
+        state: "{{ states.sensor.cooker_2.state[28:-2] |int(base=16) }}"
+        state_class: measurement
+        device_class: temperature
+        availability: "{{ states.sensor.cooker_2.state != 'unavailable' }}"
 ```
 
 Configuration variables (sensor platform):
