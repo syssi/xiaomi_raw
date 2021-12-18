@@ -152,8 +152,8 @@ class XiaomiMiioGenericDevice(SwitchEntity):
         return self._state
 
     @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
+    def extra_state_attributes(self):
+        """Return the extra state attributes of the device."""
         return self._state_attrs
 
     async def _try_command(self, mask_error, func, *args, **kwargs):
