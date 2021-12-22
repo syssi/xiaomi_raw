@@ -237,7 +237,7 @@ class XiaomiMiioGenericDevice(Entity):
 
             _LOGGER.info("Response received from miio device: %s", result)
 
-            return result and (result[0] == "ok" or result[0]["code"] == 0)
+            return result and (result[0] == "ok" or result[0] == "OK" or result[0]["code"] == 0)
         except DeviceException as exc:
             _LOGGER.error(mask_error, exc)
             return False
