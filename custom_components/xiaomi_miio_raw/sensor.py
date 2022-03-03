@@ -164,7 +164,9 @@ class XiaomiMiioGenericDevice(Entity):
             self._properties.append(self._sensor_property)
 
         self._model = device_info.model
-        self._unique_id = "{}-{}-{}".format(device_info.model, device_info.mac_address, self._sensor_property)
+        self._unique_id = "{}-{}-{}".format(
+            device_info.model, device_info.mac_address, self._sensor_property
+        )
         self._icon = "mdi:flask-outline"
 
         self._available = None
@@ -226,8 +228,8 @@ class XiaomiMiioGenericDevice(Entity):
         return self._state
 
     @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
+    def extra_state_attributes(self):
+        """Return the extra state attributes of the device."""
         return self._state_attrs
 
     async def _try_command(self, mask_error, func, *args, **kwargs):
@@ -237,7 +239,9 @@ class XiaomiMiioGenericDevice(Entity):
 
             _LOGGER.info("Response received from miio device: %s", result)
 
-            return result and (result[0] == "ok" or result[0]["code"] == 0)
+            return result and (
+                result[0] == "ok" or result[0] == "OK" or result[0]["code"] == 0
+            )
         except DeviceException as exc:
             _LOGGER.error(mask_error, exc)
             return False
