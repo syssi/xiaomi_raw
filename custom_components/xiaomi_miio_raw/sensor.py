@@ -9,7 +9,7 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.entity import Entity
-from miio import Device, DeviceException  # pylint: disable=import-error
+from miio import Device, DeviceException
 
 _LOGGER = logging.getLogger(__name__)
 
