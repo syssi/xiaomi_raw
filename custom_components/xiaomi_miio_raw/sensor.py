@@ -130,7 +130,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
         update_tasks = []
         for device in devices:
             yield from getattr(device, method["method"])(**params)
-            update_tasks.append(device.async_update_ha_state(True))
+            update_tasks.append(asyncio.create_task(device.async_update_ha_state(True)))
 
         if update_tasks:
             yield from asyncio.wait(update_tasks)
