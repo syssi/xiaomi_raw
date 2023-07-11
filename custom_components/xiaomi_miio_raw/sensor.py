@@ -81,8 +81,7 @@ SERVICE_TO_METHOD = {
 
 
 # pylint: disable=unused-argument
-@asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
     if DATA_KEY not in hass.data:
         hass.data[DATA_KEY] = {}
@@ -110,8 +109,7 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
 
-    @asyncio.coroutine
-    def async_service_handler(service):
+    async def async_service_handler(service):
         """Map services to methods on XiaomiMiioDevice."""
         method = SERVICE_TO_METHOD.get(service.service)
         params = {
@@ -129,11 +127,13 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
         update_tasks = []
         for device in devices:
-            yield from getattr(device, method["method"])(**params)
+            if not hasattr(device, method["method"]):
+                continue
+            await getattr(device, method["method"])(**params)
             update_tasks.append(asyncio.create_task(device.async_update_ha_state(True)))
 
         if update_tasks:
-            yield from asyncio.wait(update_tasks)
+            await asyncio.wait(update_tasks)
 
     for service in SERVICE_TO_METHOD:
         schema = SERVICE_TO_METHOD[service].get("schema", SERVICE_SCHEMA)
