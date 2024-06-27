@@ -54,10 +54,8 @@ ATTR_HARDWARE_VERSION = "hardware_version"
 
 SUCCESS = ["ok"]
 
-
 # pylint: disable=unused-argument
-@asyncio.coroutine
-def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
 
     if DATA_KEY not in hass.data:
@@ -69,8 +67,8 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
     try:
-        miio_device = Device(host, token)
-        device_info = miio_device.info()
+        miio_device = await hass.async_add_executor_job(Device, host, token)
+        device_info = await hass.async_add_executor_job(miio_device.info)
         model = device_info.model
         _LOGGER.info(
             "%s %s %s detected",
@@ -85,7 +83,6 @@ def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
-
 
 class XiaomiMiioGenericDevice(SwitchEntity):
     """Representation of a Xiaomi Miio Generic Device."""
@@ -159,10 +156,8 @@ class XiaomiMiioGenericDevice(SwitchEntity):
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
         try:
-            result = await self.hass.async_add_job(partial(func, *args, **kwargs))
-
+            result = await self.hass.async_add_executor_job(partial(func, *args, **kwargs))
             _LOGGER.info("Response received from miio device: %s", result)
-
             return result == SUCCESS
         except DeviceException as exc:
             _LOGGER.error(mask_error, exc)
@@ -202,7 +197,7 @@ class XiaomiMiioGenericDevice(SwitchEntity):
             return
 
         try:
-            state = await self.hass.async_add_job(
+            state = await self.hass.async_add_executor_job(
                 self._device.send, self._state_property_getter, [self._state_property]
             )
             state = state.pop()
