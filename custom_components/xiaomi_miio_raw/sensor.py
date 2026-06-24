@@ -92,8 +92,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
     _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
 
     try:
-        miio_device = Device(host, token)
-        device_info = miio_device.info()
+        miio_device = await hass.async_add_executor_job(Device, host, token)
+        device_info = await hass.async_add_executor_job(miio_device.info)
         model = device_info.model
         _LOGGER.info(
             "%s %s %s detected",
