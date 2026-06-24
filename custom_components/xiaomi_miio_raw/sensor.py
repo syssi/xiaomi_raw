@@ -106,7 +106,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
     except DeviceException:
         raise PlatformNotReady
 
-    hass.data[DATA_KEY][host] = device
+    hass.data[DATA_KEY][device.unique_id] = device
     async_add_devices([device], update_before_add=True)
 
     async def async_service_handler(service):
