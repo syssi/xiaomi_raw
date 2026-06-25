@@ -1,13 +1,14 @@
-import asyncio
-import logging
-from functools import partial
+"""Xiaomi Miio Raw switch platform."""
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
+from functools import partial
+import logging
+
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
+import homeassistant.helpers.config_validation as cv
 from miio import Device, DeviceException
+import voluptuous as vol
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ ATTR_HARDWARE_VERSION = "hardware_version"
 
 SUCCESS = ["ok"]
 
+
 # pylint: disable=unused-argument
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
     """Set up the sensor from config."""
@@ -78,11 +80,12 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         )
 
         device = XiaomiMiioGenericDevice(miio_device, config, device_info)
-    except DeviceException:
-        raise PlatformNotReady
+    except DeviceException as err:
+        raise PlatformNotReady from err
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
+
 
 class XiaomiMiioGenericDevice(SwitchEntity):
     """Representation of a Xiaomi Miio Generic Device."""
@@ -104,8 +107,8 @@ class XiaomiMiioGenericDevice(SwitchEntity):
         self._skip_update = False
 
         self._model = device_info.model
-        self._unique_id = "{}-{}-{}".format(
-            device_info.model, device_info.mac_address, self._state_property
+        self._unique_id = (
+            f"{device_info.model}-{device_info.mac_address}-{self._state_property}"
         )
         self._icon = "mdi:flask-outline"
 
@@ -156,7 +159,9 @@ class XiaomiMiioGenericDevice(SwitchEntity):
     async def _try_command(self, mask_error, func, *args, **kwargs):
         """Call a device command handling error messages."""
         try:
-            result = await self.hass.async_add_executor_job(partial(func, *args, **kwargs))
+            result = await self.hass.async_add_executor_job(
+                partial(func, *args, **kwargs)
+            )
             _LOGGER.info("Response received from miio device: %s", result)
             return result == SUCCESS
         except DeviceException as exc:

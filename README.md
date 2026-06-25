@@ -6,7 +6,7 @@
 ![GitHub watchers](https://img.shields.io/github/watchers/syssi/xiaomi_raw)
 [!["Buy Me A Coffee"](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://www.buymeacoffee.com/syssi)
 
-This is a custom component for home assistant to faciliate the reverse engeneering of Xiaomi MiIO devices.
+This is a custom component for home assistant to facilitate the reverse engineering of Xiaomi MiIO devices.
 
 Please follow the instructions on [Retrieving the Access Token](https://www.home-assistant.io/integrations/xiaomi_miio/#xiaomi-cloud-tokens-extractor) to get the API token to use in the configuration.yaml file.
 
