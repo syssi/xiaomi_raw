@@ -1,15 +1,17 @@
-import asyncio
-import logging
-from ast import literal_eval
-from functools import partial
+"""Xiaomi Miio Raw sensor platform."""
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
+from ast import literal_eval
+import asyncio
+from functools import partial
+import logging
+
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_NAME, CONF_TOKEN
 from homeassistant.exceptions import PlatformNotReady
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from miio import Device, DeviceException
+import voluptuous as vol
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,8 +105,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         )
 
         device = XiaomiMiioGenericDevice(miio_device, config, device_info)
-    except DeviceException:
-        raise PlatformNotReady
+    except DeviceException as err:
+        raise PlatformNotReady from err
 
     hass.data[DATA_KEY][host] = device
     async_add_devices([device], update_before_add=True)
@@ -135,8 +137,8 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
         if update_tasks:
             await asyncio.wait(update_tasks)
 
-    for service in SERVICE_TO_METHOD:
-        schema = SERVICE_TO_METHOD[service].get("schema", SERVICE_SCHEMA)
+    for service, value in SERVICE_TO_METHOD.items():
+        schema = value.get("schema", SERVICE_SCHEMA)
         hass.services.async_register(
             DOMAIN, service, async_service_handler, schema=schema
         )
@@ -164,8 +166,8 @@ class XiaomiMiioGenericDevice(Entity):
             self._properties.append(self._sensor_property)
 
         self._model = device_info.model
-        self._unique_id = "{}-{}-{}".format(
-            device_info.model, device_info.mac_address, self._sensor_property
+        self._unique_id = (
+            f"{device_info.model}-{device_info.mac_address}-{self._sensor_property}"
         )
         self._icon = "mdi:flask-outline"
 
@@ -181,14 +183,15 @@ class XiaomiMiioGenericDevice(Entity):
         }
 
     def set_properties(self, properties):
+        """Parse and store the properties configuration."""
         if self._properties_getter != CMD_GET_PROPERTIES:
             self._properties = list(set(properties))
             return self._properties
         else:
             attrs = {}
-            for p in properties:
-                p = literal_eval(p)
-                attrs[p["siid"], p["piid"]] = p.pop("name", p["did"]), p
+            for prop_str in properties:
+                prop = literal_eval(prop_str)
+                attrs[prop["siid"], prop["piid"]] = prop.pop("name", prop["did"]), prop
             self._properties = attrs
             return list(i[0] for i in attrs.values())
 
@@ -295,7 +298,7 @@ class XiaomiMiioGenericDevice(Entity):
                 (attrs[i["siid"], i["piid"]][0], i.get("value")) for i in values
             )
         else:
-            state = dict(zip(attrs, values))
+            state = dict(zip(attrs, values, strict=False))
 
         _LOGGER.info("New state: %s", state)
 
@@ -342,7 +345,7 @@ class XiaomiMiioGenericDevice(Entity):
 
     async def async_command(self, method: str, params):
         """Send a raw command to the device."""
-        _LOGGER.info("Sending command: %s %s" % (method, params))
+        _LOGGER.info("Sending command: %s %s", method, params)
         await self._try_command(
             "Turning the miio device on failed.", self._device.send, method, params
         )
