@@ -1,0 +1,58 @@
+sensor_turn_on:
+  name: Sensor turn on
+  description: Send the default set_power on command to a Xiaomi miIO raw sensor entity.
+  target:
+    entity:
+      integration: xiaomi_miio_raw
+      domain: sensor
+
+sensor_turn_off:
+  name: Sensor turn off
+  description: Send the default set_power off command to a Xiaomi miIO raw sensor entity.
+  target:
+    entity:
+      integration: xiaomi_miio_raw
+      domain: sensor
+
+sensor_set_properties:
+  name: Sensor set properties
+  description: Update the list of properties retrieved by a Xiaomi miIO raw sensor entity.
+  target:
+    entity:
+      integration: xiaomi_miio_raw
+      domain: sensor
+  fields:
+    properties:
+      name: Properties
+      description: List of properties to retrieve from the device.
+      required: false
+      example:
+        - power
+        - temperature
+        - humidity
+      selector:
+        object:
+
+sensor_raw_command:
+  name: Sensor raw command
+  description: Send a raw miIO command to a Xiaomi miIO raw sensor entity.
+  target:
+    entity:
+      integration: xiaomi_miio_raw
+      domain: sensor
+  fields:
+    method:
+      name: Method
+      description: Name of the miIO method to call.
+      required: true
+      example: get_prop
+      selector:
+        text:
+    params:
+      name: Parameters
+      description: Parameters passed to the miIO method.
+      required: false
+      example:
+        - power
+      selector:
+        object:
