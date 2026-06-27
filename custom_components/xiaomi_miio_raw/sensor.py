@@ -36,7 +36,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_DEFAULT_PROPERTIES, default=["power"]): vol.All(
             cv.ensure_list, [cv.string]
         ),
-        vol.Optional(CONF_MAX_PROPERTIES, default=15): cv.positive_int,
+        vol.Optional(CONF_MAX_PROPERTIES, default=15): vol.All(
+            vol.Coerce(int), vol.Range(min=1)
+        ),
     }
 )
 
