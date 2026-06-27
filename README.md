@@ -214,8 +214,8 @@ Update the list of the retrieved properties.
 
 | Service data attribute    | Optional | Description                                                                |
 |---------------------------|----------|----------------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                             |
-| `properties`              |      yes | List of properties. The default is `['power']`                             |
+| `entity_id`               | no       | Only act on a specific Xiaomi miIO raw sensor entity.                      |
+| `properties`              | yes      | List of properties. The default is `['power']`                             |
 
 
 ```
@@ -231,7 +231,7 @@ Send a command to the device.
 
 | Service data attribute    | Optional | Description                                                                |
 |---------------------------|----------|----------------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                             |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO raw sensor entity.                      |
 | `method`                  |       no | Method name of the command. Example: `set_power`                           |
 | `params`                  |      yes | List of parameters. Example: `['on']`                                      |
 
@@ -258,7 +258,7 @@ Turn the device on.
 
 | Service data attribute    | Optional | Description                                                          |
 |---------------------------|----------|----------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific xiaomi miio entity.                           |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO raw sensor entity.                |
 
 #### Service `xiaomi_miio_raw.sensor_turn_off`
 
@@ -266,5 +266,5 @@ Turn the device off.
 
 | Service data attribute    | Optional | Description                                                          |
 |---------------------------|----------|----------------------------------------------------------------------|
-| `entity_id`               |       no | Only act on a specific Xiaomi miIO fan entity.                       |
+| `entity_id`               |       no | Only act on a specific Xiaomi miIO raw sensor entity.                |
 
