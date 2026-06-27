@@ -37,7 +37,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             cv.ensure_list, [cv.string]
         ),
         vol.Optional(CONF_MAX_PROPERTIES, default=15): vol.All(
-            vol.Coerce(int), vol.Range(min=1)
+            vol.Coerce(int), vol.Range(min=1, max=16)
         ),
     }
 )
